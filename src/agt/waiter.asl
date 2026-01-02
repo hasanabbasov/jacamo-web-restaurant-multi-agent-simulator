@@ -1,0 +1,118 @@
+/*
+ * Waiter Agent - Restaurant Multi-Agent System
+ * Rol: Koordinatör garson
+ * Amaç: Siparişleri almak, mutfağa iletmek, servis yapmak
+ * 
+ * 🍽️ İkonlar: 🧑‍🍳 Garson, 📝 Sipariş, 🍽️ Servis
+ * 
+ * JaCaMo-Web üzerinden mesaj gönderebilirsiniz:
+ * POST http://localhost:8080/agents/waiter/inbox
+ * {"performative": "achieve", "content": "takeOrder(webCustomer, pizza)"}
+ */
+
+// Initial beliefs - MUST be at the top
+tableCount(0).
+orderCount(0).
+
+// Initial goal
+!start.
+
++!start <- 
+    .print("═══════════════════════════════════════════════════════");
+    .print("🧑‍🍳 GARSON - Restoran servise hazır!");
+    .print("═══════════════════════════════════════════════════════");
+    .print("📋 JaCaMo-Web: http://localhost:8080");
+    .print("📋 Sipariş göndermek için waiter agent'ına mesaj gönderin");
+    .print("═══════════════════════════════════════════════════════").
+
+// Moise organizational goals
++!takeOrder[scheme(S),source(self)] <-
+    .print("🧑‍🍳 [ORG] Ready to take orders").
+    
++!serveFood[scheme(S),source(self)] <-
+    .print("🧑‍🍳 [ORG] Ready to serve food").
+
+// ========== MASA ATAMA ==========
++!assignTable(Customer)[source(S)] <-
+    .print("═══════════════════════════════════════════════════════");
+    .print("🧑‍🍳 [MASA] Müşteri geldi: ", Customer);
+    assignTable(Customer);
+    .print("🧑‍🍳 [MASA] Masa atandı: ", Customer);
+    .print("═══════════════════════════════════════════════════════").
+
+// Masa atandığında (artifact signal)
++tableAssigned(TableId, Customer)[source(percept)] <-
+    .print("🧑‍🍳 [MASA] Masa ", TableId, " → ", Customer);
+    if (Customer \== webCustomer) {
+        .send(Customer, tell, tableAssigned(TableId))
+    }.
+
+// ========== SİPARİŞ ALMA ==========
+// Bu plan hem agent'lardan hem de JaCaMo-Web'den gelen siparişleri kabul eder
++!takeOrder(Customer, Food)[source(S)] <-
+    .print("═══════════════════════════════════════════════════════");
+    .print("🧑‍🍳 [SİPARİŞ] 📝 Yeni sipariş alındı!");
+    .print("🧑‍🍳 [SİPARİŞ] Müşteri: ", Customer);
+    .print("🧑‍🍳 [SİPARİŞ] Yemek: ", Food);
+    .print("🧑‍🍳 [SİPARİŞ] Kaynak: ", S);
+    .print("═══════════════════════════════════════════════════════");
+    
+    // Update order count
+    ?orderCount(N);
+    -+orderCount(N+1);
+    .print("🧑‍🍳 [SİPARİŞ] Toplam sipariş sayısı: ", N+1);
+    
+    // Record order in artifact
+    recordOrder(Customer, Food);
+    addToOrder(Customer, Food);
+    
+    // Notify customer if it's an agent and NOT webCustomer
+    if (S \== self & S \== webCustomer) {
+        .send(S, tell, orderReceived(Food))
+    };
+    
+    // Send to kitchen
+    .print("🧑‍🍳 [MUTFAK] Siparişi mutfağa gönderiyorum: ", Food);
+    .send(cook, achieve, prepareFood(Customer, Food)).
+
+// ========== SERVİS ==========
+// Yemek hazır olduğunda (aşçıdan gelen mesaj)
++foodReady(Customer, Food)[source(cook)] <-
+    .print("═══════════════════════════════════════════════════════");
+    .print("🧑‍🍳 [SERVİS] 🍽️ Yemek hazır!");
+    .print("🧑‍🍳 [SERVİS] ", Food, " → ", Customer);
+    .print("═══════════════════════════════════════════════════════");
+    deliverFood(Customer, Food);
+    if (Customer \== webCustomer) {
+        .send(Customer, tell, foodServed(Food))
+    }.
+
+// ========== HESAP ==========
++!getBill(Customer)[source(S)] <-
+    .print("═══════════════════════════════════════════════════════");
+    .print("🧑‍🍳 [HESAP] 💰 Hesap hazırlanıyor: ", Customer);
+    calculateBill(Customer, Amount);
+    .print("🧑‍🍳 [HESAP] Tutar: $", Amount);
+    .print("═══════════════════════════════════════════════════════");
+    if (S \== webCustomer) {
+        .send(S, tell, billReady(Amount))
+    }.
+
+// ========== MASA TEMİZLEME ==========
++!freeTable(Customer)[source(S)] <-
+    .print("═══════════════════════════════════════════════════════");
+    .print("🧑‍🍳 [MASA] 🧹 Masa temizleniyor: ", Customer);
+    freeTable(Customer);
+    .print("🧑‍🍳 [MASA] Masa boşaltıldı");
+    .print("═══════════════════════════════════════════════════════").
+
+// ========== HATA DURUMU ==========
++foodFailed(Customer, Food)[source(cook)] <-
+    .print("🧑‍🍳 [HATA] ❌ Yemek hazırlanamadı: ", Food, " for ", Customer);
+    if (Customer \== webCustomer) {
+        .send(Customer, tell, foodUnavailable(Food))
+    }.
+
+{ include("$jacamoJar/templates/common-cartago.asl") }
+{ include("$jacamoJar/templates/common-moise.asl") }
+{ include("$moiseJar/asl/org-obedient.asl") }

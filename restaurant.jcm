@@ -1,0 +1,66 @@
+/*
+ * Restaurant Multi-Agent System
+ * JaCaMo Configuration File
+ */
+
+mas restaurant {
+
+    // ========== AGENTS ==========
+    
+    agent customer1 : customer.asl {
+        focus: diningRoom.orderBoard
+        focus: diningRoom.tables
+        beliefs: preferredFood(pizza)
+    }
+    
+    agent customer2 : customer.asl {
+        focus: diningRoom.orderBoard
+        focus: diningRoom.tables
+        beliefs: preferredFood(burger)
+    }
+    
+    agent waiter : waiter.asl {
+        focus: diningRoom.orderBoard
+        focus: diningRoom.tables
+        focus: diningRoom.cashRegister
+        focus: kitchenArea.kitchen
+    }
+    
+    agent cook : cook.asl {
+        focus: diningRoom.orderBoard
+        focus: kitchenArea.kitchen
+    }
+    
+    agent cashier : cashier.asl {
+        focus: diningRoom.cashRegister
+    }
+
+    // ========== WORKSPACES ==========
+    
+    workspace diningRoom {
+        artifact orderBoard : restaurant.OrderBoard
+        artifact tables : restaurant.TableManager(5)
+        artifact cashRegister : restaurant.CashRegister
+    }
+    
+    workspace kitchenArea {
+        artifact kitchen : restaurant.Kitchen(2)
+    }
+
+    // ========== ORGANIZATION ==========
+    
+    organisation restaurantOrg : restaurant.xml {
+        group serviceTeam : restaurantTeam {
+            players: customer1 rcustomer,
+                     customer2 rcustomer,
+                     waiter rwaiter,
+                     cook rcook,
+                     cashier rcashier
+            responsible-for: mainService
+        }
+        scheme mainService : serviceFlow
+    }
+
+    // ========== PLATFORM ==========
+    platform: jacamo.web.JCMWeb("--main 2181 --restPort 8080")
+}

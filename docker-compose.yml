@@ -1,0 +1,26 @@
+services:
+  # JaCaMo MAS Application
+  jacamo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: jacamo-restaurant:latest
+    container_name: jacamo-mas
+    expose:
+      - "8080"
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy - serves both JaCaMo-Web and simulation.html
+  nginx:
+    image: nginx:alpine
+    container_name: jacamo-web
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./simulation.html:/usr/share/nginx/html/simulation.html:ro
+    depends_on:
+      - jacamo
+    restart: unless-stopped

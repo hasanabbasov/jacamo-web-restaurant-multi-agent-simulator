@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍽️ Restaurant Simulation - JaCaMo</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+        .header {
+            background: rgba(0,0,0,0.4);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #e94560;
+        }
+        .header h1 {
+            font-size: 1.6rem;
+            background: linear-gradient(90deg, #e94560, #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .nav-links a {
+            color: #aaa;
+            text-decoration: none;
+            margin-left: 20px;
+            padding: 8px 15px;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        .nav-links a:hover, .nav-links a.active {
+            background: rgba(233,69,96,0.3);
+            color: #fff;
+        }
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            background: rgba(0,0,0,0.3);
+        }
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4CAF50;
+            animation: pulse-dot 1s infinite;
+        }
+        .status-dot.disconnected { background: #f44336; animation: none; }
+        @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.5} }
+        .container {
+            display: grid;
+            grid-template-columns: 280px 1fr 280px;
+            gap: 15px;
+            padding: 15px;
+            max-width: 1500px;
+            margin: 0 auto;
+            height: calc(100vh - 70px);
+        }
+        .panel {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+            overflow-y: auto;
+        }
+        .panel-title {
+            font-size: 1rem;
+            margin-bottom: 12px;
+            color: #e94560;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin: 8px 0;
+            background: rgba(255,255,255,0.08);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        .menu-item:hover {
+            background: rgba(233,69,96,0.2);
+            border-color: #e94560;
+        }
+        .menu-item.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        .menu-item .icon { font-size: 1.6rem; }
+        .menu-item .info { flex: 1; margin-left: 10px; }
+        .menu-item .name { font-weight: bold; }
+        .menu-item .time { color: #888; font-size: 0.8rem; }
+        .order-btn {
+            background: linear-gradient(135deg, #e94560, #ff6b6b);
+            border: none;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+        .order-btn:hover { transform: scale(1.05); }
+        .order-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .customer-select {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 8px;
+        }
+        .customer-select label {
+            display: block;
+            margin-bottom: 8px;
+            color: #e94560;
+            font-size: 0.9rem;
+        }
+        .customer-select select {
+            width: 100%;
+            padding: 8px;
+            border-radius: 5px;
+            border: none;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 0.9rem;
+        }
+        .customer-select select option {
+            background: #1a1a2e;
+            color: white;
+        }
+        .info-box {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(33,150,243,0.2);
+            border: 1px solid #2196F3;
+            border-radius: 8px;
+            font-size: 0.75rem;
+        }
+        .info-box.success { background: rgba(76,175,80,0.2); border-color: #4CAF50; }
+        .info-box.error { background: rgba(244,67,54,0.2); border-color: #f44336; }
+        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+        .stat-box { background: rgba(255,255,255,0.08); padding: 10px; border-radius: 8px; text-align: center; }
+        .stat-value { font-size: 1.3rem; font-weight: bold; color: #e94560; }
+        .stat-label { color: #888; font-size: 0.7rem; }
+        .log-container { flex: 1; overflow-y: auto; }
+        .log-entry {
+            padding: 8px 10px;
+            margin: 5px 0;
+            background: rgba(255,255,255,0.05);
+            border-radius: 6px;
+            border-left: 3px solid #e94560;
+            font-size: 0.75rem;
+            animation: slideIn 0.3s;
+        }
+        @keyframes slideIn { from{opacity:0;transform:translateX(-10px)} to{opacity:1;transform:translateX(0)} }
+        .log-entry.order { border-left-color: #2196F3; }
+        .log-entry.api { border-left-color: #4CAF50; }
+        .log-entry.error { border-left-color: #f44336; }
+        .log-entry.jacamo { border-left-color: #FF9800; }
+        .log-time { color: #666; font-size: 0.65rem; }
+        .agent-list {
+            display: grid;
+            gap: 8px;
+        }
+        .agent-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .agent-item .agent-icon { font-size: 1.5rem; margin-right: 10px; }
+        .agent-item .agent-info { flex: 1; }
+        .agent-item .agent-name { font-weight: bold; font-size: 0.9rem; }
+        .agent-item .agent-type { color: #888; font-size: 0.7rem; }
+        .agent-item.online { border-color: #4CAF50; }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #e94560; border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🍽️ JaCaMo Restaurant - Live Simulation</h1>
+        <div class="status-indicator">
+            <div class="status-dot" id="statusDot"></div>
+            <span id="statusText">Bağlanıyor...</span>
+        </div>
+        <div class="nav-links">
+            <a href="/simulation.html" class="active">Simulation</a>
+            <a href="/index.html">Dashboard</a>
+            <a href="/agents.html">Agents</a>
+            <a href="/workspaces.html">Environment</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Left Panel: Order Menu -->
+        <div class="panel">
+            <div class="panel-title">📋 Sipariş Gönder (JaCaMo'ya)</div>
+            
+            <div class="customer-select">
+                <label>🧑 Müşteri Seç:</label>
+                <select id="customerSelect">
+                    <option value="webCustomer">webCustomer (yeni)</option>
+                    <option value="customer1">customer1</option>
+                    <option value="customer2">customer2</option>
+                </select>
+            </div>
+
+            <div class="menu-item" onclick="sendOrderToJaCaMo('pizza')">
+                <span class="icon">🍕</span>
+                <div class="info"><div class="name">Pizza</div><div class="time">⏱️ 5 saniye | $25</div></div>
+                <button class="order-btn">Sipariş</button>
+            </div>
+            <div class="menu-item" onclick="sendOrderToJaCaMo('burger')">
+                <span class="icon">🍔</span>
+                <div class="info"><div class="name">Burger</div><div class="time">⏱️ 3 saniye | $18</div></div>
+                <button class="order-btn">Sipariş</button>
+            </div>
+            <div class="menu-item" onclick="sendOrderToJaCaMo('salad')">
+                <span class="icon">🥗</span>
+                <div class="info"><div class="name">Salad</div><div class="time">⏱️ 2 saniye | $12</div></div>
+                <button class="order-btn">Sipariş</button>
+            </div>
+            <div class="menu-item" onclick="sendOrderToJaCaMo('pasta')">
+                <span class="icon">🍝</span>
+                <div class="info"><div class="name">Pasta</div><div class="time">⏱️ 4 saniye | $20</div></div>
+                <button class="order-btn">Sipariş</button>
+            </div>
+            <div class="menu-item" onclick="sendOrderToJaCaMo('steak')">
+                <span class="icon">🥩</span>
+                <div class="info"><div class="name">Steak</div><div class="time">⏱️ 7 saniye | $45</div></div>
+                <button class="order-btn">Sipariş</button>
+            </div>
+
+            <div class="stats">
+                <div class="stat-box"><div class="stat-value" id="sentOrders">0</div><div class="stat-label">Gönderilen</div></div>
+                <div class="stat-box"><div class="stat-value" id="agentCount">0</div><div class="stat-label">Agent</div></div>
+            </div>
+
+            <div class="info-box" id="infoBox">
+                ℹ️ Sipariş verdiğinizde JaCaMo waiter agent'a mesaj gönderilir.<br><br>
+                📺 <strong>Terminal'de izleyin:</strong><br>
+                <code>docker logs -f jacamo-mas</code>
+            </div>
+        </div>
+
+        <!-- Center: Agent List -->
+        <div class="panel">
+            <div class="panel-title">🤖 JaCaMo Agent'ları (Canlı)</div>
+            <div class="agent-list" id="agentList">
+                <div style="color:#888;text-align:center;padding:20px;">Yükleniyor...</div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Activity Log -->
+        <div class="panel" style="display:flex;flex-direction:column;">
+            <div class="panel-title">📜 API İşlem Geçmişi</div>
+            <div class="log-container" id="activityLog">
+                <div class="log-entry jacamo"><div class="log-time">Sistem</div><div>🚀 JaCaMo'ya bağlanılıyor...</div></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '';  // Same origin thanks to nginx proxy
+        let orderCount = 0;
+
+        // Add log entry
+        function addLog(msg, type='') {
+            const log = document.getElementById('activityLog');
+            const time = new Date().toLocaleTimeString('tr-TR');
+            log.innerHTML = `<div class="log-entry ${type}"><div class="log-time">${time}</div><div>${msg}</div></div>` + log.innerHTML;
+            if(log.children.length > 50) log.removeChild(log.lastChild);
+        }
+
+        // Update connection status
+        function setStatus(connected, text) {
+            document.getElementById('statusDot').className = connected ? 'status-dot' : 'status-dot disconnected';
+            document.getElementById('statusText').textContent = text;
+        }
+
+        // Fetch agents from JaCaMo
+        async function fetchAgents() {
+            try {
+                const response = await fetch(API_BASE + '/agents');
+                if (!response.ok) throw new Error('API yanıt vermedi');
+                
+                const agents = await response.json();
+                const agentList = document.getElementById('agentList');
+                const agentIcons = {
+                    waiter: '🧑‍🍳',
+                    cook: '👨‍🍳',
+                    cashier: '🧑‍💼',
+                    customer1: '🧑',
+                    customer2: '👩'
+                };
+
+                agentList.innerHTML = '';
+                let count = 0;
+                for (const [name, info] of Object.entries(agents)) {
+                    count++;
+                    const icon = agentIcons[name] || '🤖';
+                    agentList.innerHTML += `
+                        <div class="agent-item online">
+                            <div class="agent-icon">${icon}</div>
+                            <div class="agent-info">
+                                <div class="agent-name">${name}</div>
+                                <div class="agent-type">${info.type}</div>
+                            </div>
+                        </div>
+                    `;
+                }
+                document.getElementById('agentCount').textContent = count;
+                setStatus(true, 'JaCaMo Bağlı ✓');
+                return true;
+            } catch (error) {
+                console.error('Agent fetch error:', error);
+                document.getElementById('agentList').innerHTML = '<div style="color:#f44336;text-align:center;padding:20px;">❌ Bağlantı hatası</div>';
+                setStatus(false, 'Bağlantı Yok');
+                return false;
+            }
+        }
+
+        // Send order to JaCaMo waiter agent
+        async function sendOrderToJaCaMo(food) {
+            const customer = document.getElementById('customerSelect').value;
+            
+            addLog(`📤 Sipariş gönderiliyor: ${food} (${customer})`, 'order');
+            
+            try {
+                // Send message to waiter agent's inbox
+                const response = await fetch(API_BASE + '/agents/waiter/inbox', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        performative: 'achieve',
+                        sender: customer,
+                        receiver: 'waiter',
+                        msgId: 'order_' + Date.now(),
+                        content: `takeOrder(${customer}, ${food})`
+                    })
+                });
+
+                if (response.ok) {
+                    orderCount++;
+                    document.getElementById('sentOrders').textContent = orderCount;
+                    addLog(`✅ Sipariş JaCaMo'ya gönderildi! Waiter agent alacak.`, 'api');
+                    addLog(`📺 Terminal'de sonucu görün: docker logs -f jacamo-mas`, 'jacamo');
+                    
+                    // Update info box
+                    document.getElementById('infoBox').className = 'info-box success';
+                    document.getElementById('infoBox').innerHTML = `
+                        ✅ <strong>Sipariş gönderildi!</strong><br><br>
+                        🍽️ ${food} → ${customer}<br><br>
+                        📺 Terminal'de izleyin:<br>
+                        <code>docker logs -f jacamo-mas</code>
+                    `;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                console.error('Order error:', error);
+                addLog(`❌ Sipariş gönderilemedi: ${error.message}`, 'error');
+                
+                document.getElementById('infoBox').className = 'info-box error';
+                document.getElementById('infoBox').innerHTML = `
+                    ❌ <strong>Hata!</strong><br><br>
+                    ${error.message}<br><br>
+                    JaCaMo çalışıyor mu kontrol edin.
+                `;
+            }
+        }
+
+        // Initialize
+        async function init() {
+            addLog('🔄 JaCaMo agent\'larını kontrol ediliyor...', 'jacamo');
+            const connected = await fetchAgents();
+            
+            if (connected) {
+                addLog('✅ JaCaMo\'ya bağlandı! Agent\'lar aktif.', 'api');
+            } else {
+                addLog('❌ JaCaMo\'ya bağlanılamadı. Docker çalışıyor mu?', 'error');
+            }
+
+            // Refresh agents every 10 seconds
+            setInterval(fetchAgents, 10000);
+        }
+
+        init();
+    </script>
+</body>
+</html>

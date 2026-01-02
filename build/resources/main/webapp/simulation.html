@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍽️ Restaurant Multi-Agent Simulation - JaCaMo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .header {
+            text-align: center;
+            padding: 15px;
+            background: rgba(0,0,0,0.3);
+            border-bottom: 2px solid #e94560;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(90deg, #e94560, #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #4CAF50;
+            animation: pulse-dot 1s infinite;
+        }
+
+        .status-dot.disconnected {
+            background: #f44336;
+            animation: none;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 280px 1fr 300px;
+            gap: 15px;
+            padding: 15px;
+            max-width: 1600px;
+            margin: 0 auto;
+            height: calc(100vh - 70px);
+        }
+
+        .panel {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            overflow-y: auto;
+        }
+
+        .panel-title {
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+            color: #e94560;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 10px;
+        }
+
+        /* Menu Section */
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            margin: 8px 0;
+            background: rgba(255,255,255,0.08);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .menu-item:hover {
+            background: rgba(233, 69, 96, 0.2);
+            border-color: #e94560;
+            transform: translateX(3px);
+        }
+
+        .menu-item .food-icon {
+            font-size: 1.8rem;
+        }
+
+        .menu-item .food-info {
+            flex: 1;
+            margin-left: 12px;
+        }
+
+        .menu-item .food-name {
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .menu-item .food-time {
+            color: #888;
+            font-size: 0.8rem;
+        }
+
+        .order-btn {
+            background: linear-gradient(135deg, #e94560, #ff6b6b);
+            border: none;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+            transition: transform 0.2s;
+        }
+
+        .order-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .order-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Restaurant Visual */
+        .restaurant-view {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .restaurant-floor {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .table {
+            background: rgba(139, 69, 19, 0.3);
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+            min-height: 100px;
+            border: 2px solid #5D4037;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .table.occupied {
+            border-color: #e94560;
+            background: rgba(233, 69, 96, 0.15);
+        }
+
+        .table.ordering {
+            border-color: #2196F3;
+            background: rgba(33, 150, 243, 0.15);
+            animation: pulse 1s infinite;
+        }
+
+        .table.waiting {
+            border-color: #FF9800;
+            background: rgba(255, 152, 0, 0.15);
+        }
+
+        .table.eating {
+            border-color: #4CAF50;
+            background: rgba(76, 175, 80, 0.15);
+            animation: pulse 1s infinite;
+        }
+
+        .table.paying {
+            border-color: #9C27B0;
+            background: rgba(156, 39, 176, 0.15);
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .table-number {
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #16213e;
+            padding: 2px 10px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            border: 1px solid #e94560;
+        }
+
+        .customer-icon {
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+
+        .table-status {
+            font-size: 0.75rem;
+            color: #aaa;
+        }
+
+        .table-food {
+            font-size: 1.5rem;
+            margin-top: 5px;
+        }
+
+        /* Kitchen Section */
+        .kitchen {
+            background: linear-gradient(180deg, rgba(255,100,0,0.15), rgba(255,50,0,0.08));
+            border-radius: 10px;
+            padding: 15px;
+            border: 2px solid #ff6b00;
+            flex: 1;
+        }
+
+        .kitchen-title {
+            text-align: center;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: #ff6b00;
+        }
+
+        .cooking-items {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            min-height: 60px;
+            align-items: center;
+        }
+
+        .cooking-item {
+            background: rgba(255,255,255,0.1);
+            padding: 10px 18px;
+            border-radius: 8px;
+            text-align: center;
+            animation: cooking 0.5s infinite alternate;
+        }
+
+        @keyframes cooking {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-3px); }
+        }
+
+        .cooking-item .food-emoji {
+            font-size: 2rem;
+        }
+
+        .cooking-item .timer {
+            display: block;
+            color: #ff6b00;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .cooking-item .customer-label {
+            font-size: 0.7rem;
+            color: #888;
+        }
+
+        /* Agent Status */
+        .agents-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .agent-card {
+            flex: 1;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .agent-card.busy {
+            border-color: #e94560;
+            background: rgba(233, 69, 96, 0.1);
+        }
+
+        .agent-card .agent-icon {
+            font-size: 2rem;
+        }
+
+        .agent-card.busy .agent-icon {
+            animation: bounce 0.5s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .agent-card .agent-name {
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .agent-card .agent-state {
+            font-size: 0.7rem;
+            color: #888;
+        }
+
+        /* Activity Log */
+        .log-container {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            padding: 8px 10px;
+            margin: 6px 0;
+            background: rgba(255,255,255,0.05);
+            border-radius: 6px;
+            border-left: 3px solid #e94560;
+            font-size: 0.8rem;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .log-entry.order { border-left-color: #2196F3; }
+        .log-entry.cooking { border-left-color: #ff6b00; }
+        .log-entry.served { border-left-color: #4CAF50; }
+        .log-entry.payment { border-left-color: #9C27B0; }
+        .log-entry.api { border-left-color: #00BCD4; }
+
+        .log-time {
+            color: #666;
+            font-size: 0.7rem;
+        }
+
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .stat-box {
+            background: rgba(255,255,255,0.08);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #e94560;
+        }
+
+        .stat-label {
+            color: #888;
+            font-size: 0.75rem;
+        }
+
+        /* Artifact Status */
+        .artifact-status {
+            margin-top: 12px;
+            padding: 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+        }
+
+        .artifact-status h4 {
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+            color: #e94560;
+        }
+
+        .artifact-prop {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .artifact-prop:last-child {
+            border-bottom: none;
+        }
+
+        .artifact-prop .prop-name {
+            color: #888;
+        }
+
+        .artifact-prop .prop-value {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #e94560;
+            border-radius: 10px;
+        }
+
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            .restaurant-floor {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🍽️ Restaurant Multi-Agent Simulation</h1>
+        <div class="connection-status">
+            <div class="status-dot" id="connectionDot"></div>
+            <span id="connectionText">JaCaMo'ya bağlanıyor...</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Left Panel: Menu -->
+        <div class="panel">
+            <div class="panel-title">📋 Menü - Sipariş Ver</div>
+            
+            <div class="menu-item" onclick="sendOrder('pizza')">
+                <span class="food-icon">🍕</span>
+                <div class="food-info">
+                    <div class="food-name">Pizza</div>
+                    <div class="food-time">⏱️ 5 saniye | $25</div>
+                </div>
+                <button class="order-btn">Sipariş</button>
+            </div>
+
+            <div class="menu-item" onclick="sendOrder('burger')">
+                <span class="food-icon">🍔</span>
+                <div class="food-info">
+                    <div class="food-name">Burger</div>
+                    <div class="food-time">⏱️ 3 saniye | $18</div>
+                </div>
+                <button class="order-btn">Sipariş</button>
+            </div>
+
+            <div class="menu-item" onclick="sendOrder('salad')">
+                <span class="food-icon">🥗</span>
+                <div class="food-info">
+                    <div class="food-name">Salad</div>
+                    <div class="food-time">⏱️ 2 saniye | $12</div>
+                </div>
+                <button class="order-btn">Sipariş</button>
+            </div>
+
+            <div class="menu-item" onclick="sendOrder('pasta')">
+                <span class="food-icon">🍝</span>
+                <div class="food-info">
+                    <div class="food-name">Pasta</div>
+                    <div class="food-time">⏱️ 4 saniye | $20</div>
+                </div>
+                <button class="order-btn">Sipariş</button>
+            </div>
+
+            <div class="menu-item" onclick="sendOrder('steak')">
+                <span class="food-icon">🥩</span>
+                <div class="food-info">
+                    <div class="food-name">Steak</div>
+                    <div class="food-time">⏱️ 7 saniye | $45</div>
+                </div>
+                <button class="order-btn">Sipariş</button>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats">
+                <div class="stat-box">
+                    <div class="stat-value" id="totalOrders">0</div>
+                    <div class="stat-label">Tamamlanan Sipariş</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="totalRevenue">$0</div>
+                    <div class="stat-label">Toplam Gelir</div>
+                </div>
+            </div>
+
+            <!-- Artifact Status -->
+            <div class="artifact-status">
+                <h4>📊 Artifact Durumları</h4>
+                <div class="artifact-prop">
+                    <span class="prop-name">Dolu Masa:</span>
+                    <span class="prop-value" id="occupiedTables">0/5</span>
+                </div>
+                <div class="artifact-prop">
+                    <span class="prop-name">Aktif Sipariş:</span>
+                    <span class="prop-value" id="activeOrders">0</span>
+                </div>
+                <div class="artifact-prop">
+                    <span class="prop-name">Pişen Yemek:</span>
+                    <span class="prop-value" id="currentlyCooking">0</span>
+                </div>
+                <div class="artifact-prop">
+                    <span class="prop-name">Kitchen Status:</span>
+                    <span class="prop-value" id="kitchenStatus">-</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center: Restaurant Visual -->
+        <div class="panel restaurant-view">
+            <div class="panel-title">🏪 Restoran Görünümü (Gerçek JaCaMo Agent'ları)</div>
+            
+            <div class="restaurant-floor" id="tableGrid">
+                <!-- Tables will be dynamically generated -->
+            </div>
+
+            <!-- Kitchen -->
+            <div class="kitchen">
+                <div class="kitchen-title">🔥 Mutfak (Kitchen Artifact)</div>
+                <div class="cooking-items" id="cookingItems">
+                    <div style="color: #888;">Şu an pişen yemek yok</div>
+                </div>
+            </div>
+
+            <!-- Agent Status -->
+            <div class="agents-row">
+                <div class="agent-card" id="waiterCard">
+                    <div class="agent-icon">🧑‍🍳</div>
+                    <div class="agent-name">Garson</div>
+                    <div class="agent-state" id="waiterState">Hazır</div>
+                </div>
+                <div class="agent-card" id="cookCard">
+                    <div class="agent-icon">👨‍🍳</div>
+                    <div class="agent-name">Aşçı</div>
+                    <div class="agent-state" id="cookState">Hazır</div>
+                </div>
+                <div class="agent-card" id="cashierCard">
+                    <div class="agent-icon">🧑‍💼</div>
+                    <div class="agent-name">Kasiyer</div>
+                    <div class="agent-state" id="cashierState">Hazır</div>
+                </div>
+                <div class="agent-card" id="customer1Card">
+                    <div class="agent-icon">🧑</div>
+                    <div class="agent-name">Müşteri 1</div>
+                    <div class="agent-state" id="customer1State">-</div>
+                </div>
+                <div class="agent-card" id="customer2Card">
+                    <div class="agent-icon">🧑</div>
+                    <div class="agent-name">Müşteri 2</div>
+                    <div class="agent-state" id="customer2State">-</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Activity Log -->
+        <div class="panel" style="display: flex; flex-direction: column;">
+            <div class="panel-title">📜 Gerçek Zamanlı Log</div>
+            <div class="log-container" id="activityLog">
+                <div class="log-entry api">
+                    <div class="log-time">Sistem başlatıldı</div>
+                    <div>🔌 JaCaMo REST API'ye bağlanılıyor...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // JaCaMo REST API Base URL
+        const API_BASE = 'http://localhost:8080';
+        
+        // State
+        let connected = false;
+        let lastKnownState = {};
+        let orderCounter = 0;
+
+        const foodEmojis = {
+            pizza: '🍕',
+            burger: '🍔',
+            salad: '🥗',
+            pasta: '🍝',
+            steak: '🥩'
+        };
+
+        const foodTimes = {
+            pizza: 5,
+            burger: 3,
+            salad: 2,
+            pasta: 4,
+            steak: 7
+        };
+
+        // Initialize tables
+        function initTables() {
+            const grid = document.getElementById('tableGrid');
+            grid.innerHTML = '';
+            for (let i = 1; i <= 5; i++) {
+                grid.innerHTML += `
+                    <div class="table" id="table${i}">
+                        <div class="table-number">Masa ${i}</div>
+                        <div class="customer-icon" id="customer${i}Icon">🪑</div>
+                        <div class="table-status" id="table${i}Status">Boş</div>
+                        <div class="table-food" id="table${i}Food"></div>
+                    </div>
+                `;
+            }
+        }
+
+        function addLog(message, type = '') {
+            const log = document.getElementById('activityLog');
+            const time = new Date().toLocaleTimeString('tr-TR');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.innerHTML = `
+                <div class="log-time">${time}</div>
+                <div>${message}</div>
+            `;
+            log.insertBefore(entry, log.firstChild);
+            
+            // Keep only last 50 entries
+            while (log.children.length > 50) {
+                log.removeChild(log.lastChild);
+            }
+        }
+
+        function setConnected(status) {
+            connected = status;
+            const dot = document.getElementById('connectionDot');
+            const text = document.getElementById('connectionText');
+            
+            if (status) {
+                dot.classList.remove('disconnected');
+                text.textContent = 'JaCaMo Bağlı ✓';
+            } else {
+                dot.classList.add('disconnected');
+                text.textContent = 'Bağlantı kesildi';
+            }
+        }
+
+        // Fetch agent state
+        async function fetchAgentState(agentName) {
+            try {
+                const response = await fetch(`${API_BASE}/agents/${agentName}`);
+                if (response.ok) {
+                    return await response.json();
+                }
+            } catch (e) {
+                console.error(`Error fetching ${agentName}:`, e);
+            }
+            return null;
+        }
+
+        // Fetch workspace state
+        async function fetchWorkspaceState(workspace) {
+            try {
+                const response = await fetch(`${API_BASE}/workspaces/${workspace}`);
+                if (response.ok) {
+                    return await response.json();
+                }
+            } catch (e) {
+                console.error(`Error fetching workspace ${workspace}:`, e);
+            }
+            return null;
+        }
+
+        // Parse beliefs from agent state
+        function parseBeliefs(beliefs) {
+            const result = {};
+            if (!beliefs) return result;
+            
+            beliefs.forEach(belief => {
+                // Parse belief patterns like "totalRevenue(50)" or "currentStatus(\"text\")"
+                const match = belief.match(/^(\w+)\(([^)]*)\)/);
+                if (match) {
+                    const key = match[1];
+                    let value = match[2];
+                    // Remove quotes from string values
+                    value = value.replace(/^"|"$/g, '').replace(/\\"/g, '"');
+                    result[key] = value;
+                }
+            });
+            return result;
+        }
+
+        // Update UI from JaCaMo state
+        async function updateFromJaCaMo() {
+            try {
+                // Check connection
+                const agentsResponse = await fetch(`${API_BASE}/agents`);
+                if (!agentsResponse.ok) {
+                    setConnected(false);
+                    return;
+                }
+                setConnected(true);
+                
+                const agents = await agentsResponse.json();
+                
+                // Get workspace data
+                const diningRoom = await fetchWorkspaceState('diningRoom');
+                const kitchenArea = await fetchWorkspaceState('kitchenArea');
+                
+                if (diningRoom) {
+                    // Parse artifact properties
+                    const tables = diningRoom.tables;
+                    const kitchen = kitchenArea?.kitchen;
+                    const orderBoard = diningRoom.orderBoard;
+                    const cashRegister = diningRoom.cashRegister;
+                    
+                    if (tables?.properties) {
+                        // Extract properties
+                        let occupied = 0, total = 5;
+                        tables.properties.forEach(prop => {
+                            if (prop.occupiedTables !== undefined) occupied = prop.occupiedTables;
+                            if (prop.totalTables !== undefined) total = prop.totalTables;
+                            if (prop.tableStatus !== undefined) {
+                                // Update table status display
+                            }
+                        });
+                        document.getElementById('occupiedTables').textContent = `${occupied}/${total}`;
+                    }
+                    
+                    if (orderBoard?.properties) {
+                        let active = 0, completed = 0, status = '-';
+                        orderBoard.properties.forEach(prop => {
+                            if (prop.activeOrders !== undefined) active = prop.activeOrders;
+                            if (prop.completedOrders !== undefined) completed = prop.completedOrders;
+                            if (prop.currentStatus !== undefined) status = prop.currentStatus;
+                        });
+                        document.getElementById('activeOrders').textContent = active;
+                        document.getElementById('totalOrders').textContent = completed;
+                    }
+                    
+                    if (cashRegister?.properties) {
+                        let revenue = 0;
+                        cashRegister.properties.forEach(prop => {
+                            if (prop.totalRevenue !== undefined) revenue = prop.totalRevenue;
+                        });
+                        document.getElementById('totalRevenue').textContent = `$${revenue}`;
+                    }
+                }
+                
+                if (kitchenArea) {
+                    const kitchen = kitchenArea.kitchen;
+                    if (kitchen?.properties) {
+                        let cooking = 0, status = '-';
+                        kitchen.properties.forEach(prop => {
+                            if (prop.currentlyCooking !== undefined) cooking = prop.currentlyCooking;
+                            if (prop.kitchenStatus !== undefined) status = prop.kitchenStatus;
+                        });
+                        document.getElementById('currentlyCooking').textContent = cooking;
+                        document.getElementById('kitchenStatus').textContent = status.substring(0, 20) + '...';
+                        
+                        // Update cooking animation
+                        const cookingDiv = document.getElementById('cookingItems');
+                        if (cooking > 0) {
+                            cookingDiv.innerHTML = `
+                                <div class="cooking-item">
+                                    <div class="food-emoji">🍳</div>
+                                    <span class="timer">${cooking} yemek pişiyor</span>
+                                </div>
+                            `;
+                            document.getElementById('cookCard').classList.add('busy');
+                            document.getElementById('cookState').textContent = 'Pişiriyor...';
+                        } else {
+                            cookingDiv.innerHTML = '<div style="color: #888;">Şu an pişen yemek yok</div>';
+                            document.getElementById('cookCard').classList.remove('busy');
+                            document.getElementById('cookState').textContent = 'Hazır';
+                        }
+                    }
+                }
+                
+                // Update agent states
+                for (const agentName of ['waiter', 'cook', 'cashier', 'customer1', 'customer2']) {
+                    const agentState = await fetchAgentState(agentName);
+                    if (agentState?.beliefs) {
+                        const beliefs = parseBeliefs(agentState.beliefs);
+                        
+                        // Update agent card based on beliefs
+                        const stateEl = document.getElementById(`${agentName}State`);
+                        if (stateEl) {
+                            if (beliefs.hungry === 'true') {
+                                stateEl.textContent = 'Aç';
+                            } else if (beliefs.hungry === 'false') {
+                                stateEl.textContent = 'Tok';
+                            }
+                        }
+                    }
+                }
+                
+            } catch (e) {
+                console.error('Error updating from JaCaMo:', e);
+                setConnected(false);
+            }
+        }
+
+        // Send order to JaCaMo agent via REST API
+        async function sendOrder(food) {
+            if (!connected) {
+                addLog('❌ JaCaMo bağlantısı yok!', 'error');
+                return;
+            }
+            
+            orderCounter++;
+            const customerName = `webCustomer${orderCounter}`;
+            
+            addLog(`🛒 Sipariş gönderiliyor: ${foodEmojis[food]} ${food}`, 'api');
+            
+            try {
+                // Send message to waiter agent to take order
+                const message = {
+                    performative: 'achieve',
+                    content: `takeOrder(${customerName}, ${food})`
+                };
+                
+                const response = await fetch(`${API_BASE}/agents/waiter/inbox`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(message)
+                });
+                
+                if (response.ok) {
+                    addLog(`✅ Sipariş gönderildi: ${foodEmojis[food]} ${food} → Garson`, 'order');
+                    
+                    // Simulate order flow visually
+                    simulateOrderFlow(customerName, food);
+                } else {
+                    const errorText = await response.text();
+                    addLog(`❌ Sipariş gönderilemedi: ${errorText}`, 'error');
+                }
+            } catch (e) {
+                addLog(`❌ API hatası: ${e.message}`, 'error');
+            }
+        }
+
+        // Simulate order flow visually
+        async function simulateOrderFlow(customer, food) {
+            const tableId = (orderCounter % 5) + 1;
+            const table = document.getElementById(`table${tableId}`);
+            const customerIcon = document.getElementById(`customer${tableId}Icon`);
+            const tableStatus = document.getElementById(`table${tableId}Status`);
+            const tableFood = document.getElementById(`table${tableId}Food`);
+            
+            // Customer arrives
+            table.classList.add('occupied');
+            customerIcon.textContent = '🧑';
+            tableStatus.textContent = 'Oturuyor...';
+            
+            await sleep(1000);
+            
+            // Ordering
+            table.classList.remove('occupied');
+            table.classList.add('ordering');
+            tableStatus.textContent = 'Sipariş veriyor...';
+            tableFood.textContent = foodEmojis[food];
+            document.getElementById('waiterCard').classList.add('busy');
+            document.getElementById('waiterState').textContent = 'Sipariş alıyor';
+            addLog(`🧑‍🍳 Garson sipariş aldı: ${food}`, 'order');
+            
+            await sleep(1500);
+            document.getElementById('waiterCard').classList.remove('busy');
+            document.getElementById('waiterState').textContent = 'Hazır';
+            
+            // Waiting for food
+            table.classList.remove('ordering');
+            table.classList.add('waiting');
+            tableStatus.textContent = 'Bekliyor...';
+            
+            // Cooking
+            const cookingDiv = document.getElementById('cookingItems');
+            cookingDiv.innerHTML = `
+                <div class="cooking-item" id="cooking-${tableId}">
+                    <div class="food-emoji">${foodEmojis[food]}</div>
+                    <span class="timer" id="timer-${tableId}">${foodTimes[food]}s</span>
+                    <span class="customer-label">Masa ${tableId}</span>
+                </div>
+            `;
+            document.getElementById('cookCard').classList.add('busy');
+            document.getElementById('cookState').textContent = `${food} pişiriyor`;
+            addLog(`👨‍🍳 Aşçı ${food} pişirmeye başladı (${foodTimes[food]}sn)`, 'cooking');
+            
+            // Countdown
+            for (let i = foodTimes[food]; i >= 0; i--) {
+                const timerEl = document.getElementById(`timer-${tableId}`);
+                if (timerEl) timerEl.textContent = `${i}s`;
+                await sleep(1000);
+            }
+            
+            // Food ready
+            const cookingEl = document.getElementById(`cooking-${tableId}`);
+            if (cookingEl) cookingEl.remove();
+            if (cookingDiv.children.length === 0) {
+                cookingDiv.innerHTML = '<div style="color: #888;">Şu an pişen yemek yok</div>';
+            }
+            document.getElementById('cookCard').classList.remove('busy');
+            document.getElementById('cookState').textContent = 'Hazır';
+            addLog(`✅ ${foodEmojis[food]} ${food} hazır!`, 'served');
+            
+            // Serving
+            document.getElementById('waiterCard').classList.add('busy');
+            document.getElementById('waiterState').textContent = 'Servis yapıyor';
+            await sleep(1000);
+            
+            table.classList.remove('waiting');
+            table.classList.add('eating');
+            tableStatus.textContent = 'Yiyor... 😋';
+            addLog(`🍽️ Masa ${tableId}'e ${food} servis edildi`, 'served');
+            document.getElementById('waiterCard').classList.remove('busy');
+            document.getElementById('waiterState').textContent = 'Hazır';
+            
+            // Eating
+            await sleep(3000);
+            
+            // Payment
+            table.classList.remove('eating');
+            table.classList.add('paying');
+            tableStatus.textContent = '💰 Ödeme...';
+            document.getElementById('cashierCard').classList.add('busy');
+            document.getElementById('cashierState').textContent = 'Ödeme alıyor';
+            addLog(`💰 Müşteri ödeme yapıyor...`, 'payment');
+            
+            await sleep(1500);
+            document.getElementById('cashierCard').classList.remove('busy');
+            document.getElementById('cashierState').textContent = 'Hazır';
+            addLog(`✅ Ödeme tamamlandı!`, 'payment');
+            
+            // Leave
+            await sleep(500);
+            table.classList.remove('paying');
+            customerIcon.textContent = '🪑';
+            tableStatus.textContent = 'Boş';
+            tableFood.textContent = '';
+            addLog(`👋 Müşteri Masa ${tableId}'den ayrıldı`, '');
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // Initialize
+        initTables();
+        
+        // Start polling JaCaMo state
+        updateFromJaCaMo();
+        setInterval(updateFromJaCaMo, 2000);
+        
+        addLog('🚀 Simülasyon hazır! Menüden sipariş verebilirsiniz.', 'api');
+    </script>
+</body>
+</html>
