@@ -5,20 +5,20 @@
  * 
  * 🍳 İkonlar: 👨‍🍳 Aşçı, 🔥 Pişirme, ⏱️ Süre
  * 
- * Yemek süreleri (ms):
- * - Pizza: 5000ms (5 saniye)
- * - Burger: 3000ms (3 saniye)
- * - Salad: 2000ms (2 saniye)
- * - Pasta: 4000ms (4 saniye)
- * - Steak: 7000ms (7 saniye)
+ * Yemek süreleri (ms) - +10 saniye eklenmiş:
+ * - Pizza: 15000ms (15 saniye = 5+10)
+ * - Burger: 13000ms (13 saniye = 3+10)
+ * - Salad: 12000ms (12 saniye = 2+10)
+ * - Pasta: 14000ms (14 saniye = 4+10)
+ * - Steak: 17000ms (17 saniye = 7+10)
  */
 
-// Cooking time beliefs (in milliseconds)
-cookingTime(pizza, 5000).
-cookingTime(burger, 3000).
-cookingTime(salad, 2000).
-cookingTime(pasta, 4000).
-cookingTime(steak, 7000).
+// Cooking time beliefs (in milliseconds) - +10 SECONDS ADDED
+cookingTime(pizza, 15000).
+cookingTime(burger, 13000).
+cookingTime(salad, 12000).
+cookingTime(pasta, 14000).
+cookingTime(steak, 17000).
 
 // Currently cooking count
 currentlyCooking(0).
@@ -30,11 +30,11 @@ currentlyCooking(0).
     .print("═══════════════════════════════════════════════════════");
     .print("👨‍🍳 AŞÇI - Mutfak hazır!");
     .print("═══════════════════════════════════════════════════════");
-    .print("🍕 Pizza: 5 saniye");
-    .print("🍔 Burger: 3 saniye");
-    .print("🥗 Salad: 2 saniye");
-    .print("🍝 Pasta: 4 saniye");
-    .print("🥩 Steak: 7 saniye");
+    .print("🍕 Pizza: 15 saniye");
+    .print("🍔 Burger: 13 saniye");
+    .print("🥗 Salad: 12 saniye");
+    .print("🍝 Pasta: 14 saniye");
+    .print("🥩 Steak: 17 saniye");
     .print("═══════════════════════════════════════════════════════").
 
 // Moise organizational goal

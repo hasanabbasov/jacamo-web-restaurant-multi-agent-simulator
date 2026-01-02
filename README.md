@@ -230,24 +230,181 @@ restaurantOrg
 
 ---
 
-### 📋 Customer4 Oluşturma Senaryosu
+### 📋 Runtime Agent Tam Yapılandırma (Customer4 Örneği)
 
-Aşağıda `customer4` adında yeni bir müşteri agent'ı oluşturma adımları verilmiştir:
+Web arayüzünden oluşturulan agent'lar başlangıçta "boş kabuk"tur. Onları `customer1` gibi tam işlevsel hale getirmek için aşağıdaki adımları izleyin:
 
-1. **Tarayıcıda Aç:** `http://localhost:8080/agent_new.html`
-2. **İsim Gir:** `customer4` yazıp Enter'a bas.
-3. **Doğrula:** `http://localhost:8080/agents.html` adresinde `customer4`'ün listelendiğini gör.
-4. **Durum:** Agent şu an "default" durumda. Davranış kodu olmadığı için pasiftir.
+#### Yöntem 1: Web Arayüzü Üzerinden (Önerilen)
 
-#### Agent'ı Aktif Hale Getirmek İçin
-Projenin `restaurant.jcm` dosyasına aşağıdaki satırı ekleyin:
+**Adım 1: Agent Oluştur**
+- `http://localhost:8080/agent_new.html` → `customer4` yazıp Enter.
+
+**Adım 2: Belief Ekle (Komut Arayüzü)**
+- `http://localhost:8080/agent.html?agent=customer4` adresine git.
+- Üstteki "Command" kutusuna yaz ve Enter'a bas:
+```
++preferredFood(pasta)
+```
+
+**Adım 3: ASL Kodu Düzenle**
+- Sayfanın altındaki `customer4.asl` linkine tıkla.
+- Editörde aşağıdaki kodu yapıştır:
+
+```prolog
+// Customer 4 - Runtime oluşturulmuş agent
+preferredFood(pasta).
+
+!init.
+
++!init <-
+    joinWorkspace("diningRoom", WspId);
+    lookupArtifact("orderBoard", OrderId);
+    focus(OrderId);
+    lookupArtifact("tables", TablesId);
+    focus(TablesId);
+    .print("✅ Customer4 başlatıldı ve diningRoom'a bağlandı!").
+
+{ include("$jacamoJar/templates/common-cartago.asl") }
+{ include("$jacamoJar/templates/common-moise.asl") }
+```
+
+**Adım 4: Kaydet ve Çalıştır**
+- "Save" butonuna tıkla.
+- Komut kutusuna `!init` yazıp Enter'a bas.
+
+**Adım 5: Doğrula**
+- "Beliefs" bölümünü aç → `tableStatus`, `currentStatus` gibi artifact perception'ları görmelisin.
+- Environment grafiğinde `customer4`'ün `diningRoom` workspace'i içinde olduğunu gör.
+
+---
+
+#### Önemli Komutlar (Command Interface)
+
+| Komut | Açıklama |
+|-------|----------|
+| `+belief(value)` | Belief ekle |
+| `-belief(value)` | Belief sil |
+| `!goal` | Goal başlat |
+| `.print(message)` | Terminale log yaz |
+| `.send(agent, tell, msg)` | Diğer agent'a mesaj gönder |
+| `+{ +!goal <- action }` | Plan ekle |
+
+---
+
+#### Yöntem 2: JCM Dosyası ile Kalıcı Ekleme
+
+Sistem yeniden başladığında agent'ın otomatik oluşması için `restaurant.jcm` dosyasına ekleyin:
 
 ```
 agent customer4 : customer.asl {
-    focus: diningRoom.tables
     focus: diningRoom.orderBoard
-    join: restaurantOrg.serviceTeam.rcustomer
+    focus: diningRoom.tables
+    beliefs: preferredFood(pasta)
 }
 ```
 
-Ardından `docker-compose down && docker-compose up --build` ile sistemi yeniden başlatın.
+Organizasyona dahil etmek için `players` satırına ekleyin:
+```
+players: customer1 rcustomer,
+         customer2 rcustomer,
+         customer4 rcustomer,  // ← YENİ
+         waiter rwaiter,
+         ...
+```
+
+Ardından `docker-compose down && docker-compose up --build` ile yeniden başlatın.
+
+---
+
+### 🎯 Customer3 Oluşturma Senaryosu (Tam Örnek)
+
+`customer3` adında yeni bir müşteri agent'ı oluşturup tam işlevsel hale getirmek için:
+
+#### Adım 1: Agent Oluştur
+- `http://localhost:8080/agent_new.html` adresine git
+- `customer3` yazıp Enter'a bas
+
+#### Adım 2: ASL Editörüne Git
+- `http://localhost:8080/agent.html?agent=customer3` adresine git
+- Sayfanın altındaki `customer3.asl` linkine tıkla
+
+#### Adım 3: Aşağıdaki Kodu Yapıştır
+
+```prolog
+// ═══════════════════════════════════════════════════════════════
+// Customer3 Agent - Runtime Oluşturulmuş Müşteri
+// ═══════════════════════════════════════════════════════════════
+
+// Başlangıç Belief'leri
+preferredFood(salad).      // Bu müşteri salad seviyor
+myBudget(50).              // $50 bütçesi var
+
+// Başlangıç Goal'ı
+!init.
+
+// ═══════════════════════════════════════════════════════════════
+// INIT PLAN - Agent başladığında çalışır
+// ═══════════════════════════════════════════════════════════════
++!init <-
+    .print("═══════════════════════════════════════════════════════");
+    .print("🧑 [CUSTOMER3] Merhaba! Ben yeni bir müşteriyim.");
+    .print("═══════════════════════════════════════════════════════");
+    
+    // Workspace'e katıl
+    joinWorkspace("diningRoom", WspId);
+    .print("🧑 [CUSTOMER3] diningRoom'a girdim.");
+    
+    // Artifact'lere odaklan
+    lookupArtifact("orderBoard", OrderId);
+    focus(OrderId);
+    lookupArtifact("tables", TablesId);
+    focus(TablesId);
+    .print("🧑 [CUSTOMER3] Masalara ve sipariş tahtasına bakıyorum.");
+    
+    .print("🧑 [CUSTOMER3] Hazırım! Simülasyondan sipariş verebilirsiniz.").
+
+// ═══════════════════════════════════════════════════════════════
+// Sipariş Alma - Waiter'dan gelen mesajları işle
+// ═══════════════════════════════════════════════════════════════
++orderReceived(Food)[source(S)] <-
+    .print("🧑 [CUSTOMER3] Siparişim onaylandı: ", Food);
+    .print("🧑 [CUSTOMER3] Yemeğimi bekliyorum...").
+
++foodServed(Food)[source(S)] <-
+    .print("═══════════════════════════════════════════════════════");
+    .print("🧑 [CUSTOMER3] Yemeğim geldi: ", Food, " 🍽️");
+    .print("🧑 [CUSTOMER3] Yiyorum...");
+    .print("═══════════════════════════════════════════════════════");
+    .wait(3000);
+    .print("🧑 [CUSTOMER3] Yemeğimi bitirdim! 😋");
+    !askForBill.
+
++!askForBill <-
+    .print("🧑 [CUSTOMER3] Hesap istiyorum...");
+    .send(waiter, achieve, getBill(customer3)).
+
++billReady(Amount)[source(S)] <-
+    .print("🧑 [CUSTOMER3] Hesap geldi: $", Amount);
+    .print("🧑 [CUSTOMER3] Ödeme yapıyorum...");
+    .send(cashier, achieve, processPayment(customer3, Amount)).
+
++paymentComplete[source(S)] <-
+    .print("═══════════════════════════════════════════════════════");
+    .print("🧑 [CUSTOMER3] ✅ Ödeme tamamlandı! Teşekkürler!");
+    .print("═══════════════════════════════════════════════════════").
+
+// CArtAgO ve Moise template'leri
+{ include("$jacamoJar/templates/common-cartago.asl") }
+{ include("$jacamoJar/templates/common-moise.asl") }
+```
+
+#### Adım 4: Kaydet ve Çalıştır
+1. "Save" butonuna tıkla
+2. Komut kutusuna `!init` yaz ve Enter'a bas
+3. Terminal'de mesajları gör: `docker logs -f jacamo-mas`
+
+#### Adım 5: Simülasyondan Test Et
+1. `http://localhost:8080/simulation.html` adresine git
+2. "Müşteri Seç" dropdown'ında artık `customer3` görünmeli (10 saniye bekle)
+3. `customer3` seçip bir yemek sipariş ver
+4. Terminal'de tüm akışı izle

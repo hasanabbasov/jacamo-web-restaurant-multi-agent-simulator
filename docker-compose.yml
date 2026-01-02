@@ -4,8 +4,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: jacamo-restaurant:latest
-    container_name: jacamo-mas
+    image: jacamo-web-demo-restaurant-master:latest
+    container_name: jacamo-web-demo-restaurant-master
     expose:
       - "8080"
     stdin_open: true
@@ -15,7 +15,7 @@ services:
   # Nginx Reverse Proxy - serves both JaCaMo-Web and simulation.html
   nginx:
     image: nginx:alpine
-    container_name: jacamo-web
+    container_name: jacamo-web-demo-restaurant-nginx
     ports:
       - "8080:80"
     volumes:
