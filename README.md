@@ -192,7 +192,61 @@ jacamo-web-demo-marketplace-master/
 
 ---
 
-## 🔄 6. İletişim Akışı
+## 🏛️ 6. Organization (src/org/restaurant.xml)
+
+Moise organizasyon yapısı, agent'ların sosyal ilişkilerini, rollerini ve görevlerini tanımlar. Bu XML dosyası üç ana bölümden oluşur.
+
+### 6.1 Structural Specification (Yapısal Tanım)
+
+Agent'ların rollerini ve gruplarını belirler.
+
+**Roller:**
+| Rol ID | Açıklama | Min-Max |
+|--------|----------|---------|
+| `rcustomer` | Müşteri rolü | 1-10 |
+| `rwaiter` | Garson rolü | 1-3 |
+| `rcook` | Aşçı rolü | 1-2 |
+| `rcashier` | Kasiyer rolü | 1-1 |
+
+**İletişim Bağlantıları:**
+```
+rcustomer ↔ rwaiter   (sipariş, servis)
+rwaiter   ↔ rcook     (mutfak koordinasyonu)
+rwaiter   ↔ rcashier  (hesap)
+rcustomer ↔ rcashier  (ödeme)
+```
+
+### 6.2 Functional Specification (İşlevsel Tanım)
+
+Hizmet akışını (scheme) ve görevleri (mission) tanımlar.
+
+**Service Flow (Sıralı Akış):**
+```
+seatCustomer → takeOrder → cookFood → serveFood → takePayment
+```
+
+**Görevler (Missions):**
+| Mission | Rol | Hedefler |
+|---------|-----|----------|
+| `mCustomer` | rcustomer | seatCustomer, takePayment |
+| `mWaiter` | rwaiter | takeOrder, serveFood |
+| `mCook` | rcook | cookFood |
+| `mCashier` | rcashier | takePayment |
+
+### 6.3 Normative Specification (Normatif Tanım)
+
+Rollerin zorunlu görevlerini (obligation) belirler.
+
+| Norm | Rol | Zorunluluk |
+|------|-----|------------|
+| `normWaiterOrder` | rwaiter | Sipariş almalı |
+| `normCookFood` | rcook | Yemek hazırlamalı |
+| `normCashierPayment` | rcashier | Ödeme almalı |
+| `normCustomerPay` | rcustomer | Ödeme yapmalı |
+
+---
+
+## 🔄 7. İletişim Akışı
 
 ```
 ┌─────────────┐     (1) takeOrder      ┌─────────────┐

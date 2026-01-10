@@ -77,14 +77,27 @@ orderCount(0).
 
 // ========== SERVİS ==========
 // Yemek hazır olduğunda (aşçıdan gelen mesaj)
-+foodReady(Customer, Food)[source(cook)] <-
+// Source'u esnek tutuyoruz - herhangi bir kaynaktan kabul et
++foodReady(Customer, Food)[source(S)] <-
     .print("═══════════════════════════════════════════════════════");
-    .print("🧑‍🍳 [SERVİS] 🍽️ Yemek hazır!");
-    .print("🧑‍🍳 [SERVİS] ", Food, " → ", Customer);
+    .print("🧑‍🍳 [SERVİS] 🍽️ Yemek HAZIR!");
+    .print("🧑‍🍳 [SERVİS] Kaynak: ", S);
+    .print("🧑‍🍳 [SERVİS] Yemek: ", Food);
+    .print("🧑‍🍳 [SERVİS] Müşteri: ", Customer);
     .print("═══════════════════════════════════════════════════════");
+    
+    // Artifact'e bildir
     deliverFood(Customer, Food);
+    
+    .print("🧑‍🍳 [SERVİS] ✅ ", Food, " → ", Customer, " SERVİS EDİLDİ!");
+    .print("═══════════════════════════════════════════════════════");
+    
+    // Müşteriye bildir (webCustomer değilse)
     if (Customer \== webCustomer) {
+        .print("🧑‍🍳 [SERVİS] Müşteriye bildirim gönderiliyor: ", Customer);
         .send(Customer, tell, foodServed(Food))
+    } else {
+        .print("🧑‍🍳 [SERVİS] Web müşterisi - bildirim gerekmiyor")
     }.
 
 // ========== HESAP ==========

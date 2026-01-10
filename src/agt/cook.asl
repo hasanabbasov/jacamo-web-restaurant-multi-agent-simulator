@@ -42,9 +42,11 @@ currentlyCooking(0).
     .print("👨‍🍳 [ORG] Ready to cook").
 
 // ========== YEMEK HAZIRLAMA ==========
-+!prepareFood(Customer, Food)[source(waiter)] <-
+// Source'u esnek tutuyoruz - herhangi bir kaynaktan kabul et
++!prepareFood(Customer, Food)[source(S)] <-
     .print("═══════════════════════════════════════════════════════");
     .print("👨‍🍳 [PİŞİRME] 🔥 Yeni sipariş geldi!");
+    .print("👨‍🍳 [PİŞİRME] Kaynak: ", S);
     .print("👨‍🍳 [PİŞİRME] Yemek: ", Food);
     .print("👨‍🍳 [PİŞİRME] Müşteri: ", Customer);
     
