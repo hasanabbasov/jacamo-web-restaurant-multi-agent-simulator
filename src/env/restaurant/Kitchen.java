@@ -36,10 +36,10 @@ public class Kitchen extends Artifact {
     }
 
     /**
-     * Pişirme başlat
+     * Pişirme başlat (Kitchen tracking)
      */
     @OPERATION
-    void startCooking(String food) {
+    void kitchenStartCooking(String food) {
         currentCooking++;
         getObsProperty("currentlyCooking").updateValue(currentCooking);
 
@@ -50,10 +50,10 @@ public class Kitchen extends Artifact {
     }
 
     /**
-     * Pişirme bitir
+     * Pişirme bitir (Kitchen tracking)
      */
     @OPERATION
-    void finishCooking(String food) {
+    void kitchenFinishCooking(String food) {
         currentCooking = Math.max(0, currentCooking - 1);
         getObsProperty("currentlyCooking").updateValue(currentCooking);
 

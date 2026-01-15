@@ -7,11 +7,23 @@ RUN apk update && \
 # Set working directory
 WORKDIR /app
 
-# Copy project files
-COPY . .
+# ========== GRADLE CACHING OPTIMIZATION ==========
+# Copy only gradle wrapper files first (for better Docker layer caching)
+COPY gradlew .
+COPY gradle/ gradle/
 
-# Make gradlew executable
-RUN chmod +x ./gradlew
+# Make gradlew executable and download Gradle (cached layer)
+RUN chmod +x ./gradlew && \
+    ./gradlew --version
+
+# Copy build.gradle to download dependencies (cached layer)
+COPY build.gradle .
+COPY settings.gradle* ./
+RUN ./gradlew dependencies --no-daemon || true
+
+# ========== PROJECT FILES ==========
+# Now copy the rest of the project files
+COPY . .
 
 # Expose all necessary ports
 # 8080 - JaCaMo-Web REST API & Dashboard
@@ -21,4 +33,4 @@ RUN chmod +x ./gradlew
 EXPOSE 8080 3271 3272 3273
 
 # Run the JaCaMo application
-CMD ["./gradlew", "run"]
+CMD ["./gradlew", "run", "--no-daemon"]

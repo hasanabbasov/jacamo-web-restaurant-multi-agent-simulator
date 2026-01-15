@@ -410,6 +410,7 @@ agent customer4 : customer.asl {
 ### 🔄 Devam Eden
 - [ ] Priority queue algoritması (değer/süre sıralaması)
 - [ ] Daha detaylı kuyruk görselleştirmesi
+- [ ] Blackboard Pattern Dene!
 
 ### 📝 Notlar
 - JaCaMo agent'ları terminalde detaylı log basar

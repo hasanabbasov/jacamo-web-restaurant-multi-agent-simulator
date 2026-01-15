@@ -773,7 +773,8 @@
             cookingOrders: 0,
             completedOrders: 0,
             currentStatus: '',
-            statusHistory: []
+            statusHistory: [],
+            pendingOrdersList: []  // Priority sorted orders from backend
         };
 
         // Poll JaCaMo artifacts for real status
@@ -799,6 +800,14 @@
                         jacamoStatus.pendingOrders = parseInt(props.pendingOrders) || 0;
                         jacamoStatus.cookingOrders = parseInt(props.cookingOrders) || 0;
                         jacamoStatus.completedOrders = parseInt(props.completedOrders) || 0;
+                        
+                        // Parse pendingOrdersList JSON
+                        try {
+                            const pendingList = props.pendingOrdersList || '[]';
+                            jacamoStatus.pendingOrdersList = JSON.parse(pendingList);
+                        } catch (e) {
+                            jacamoStatus.pendingOrdersList = [];
+                        }
                         
                         const newStatus = props.currentStatus || '';
                         
@@ -833,11 +842,35 @@
 
         // Render queues from JaCaMo status
         function renderJaCaMoQueues() {
-            // Waiting (Pending Orders)
+            // Waiting (Pending Orders) - Priority sorted by value score
             const waitingDiv = document.getElementById('waitingQueue');
-            if (jacamoStatus.pendingOrders === 0) {
+            if (jacamoStatus.pendingOrdersList.length === 0 && jacamoStatus.pendingOrders === 0) {
                 waitingDiv.innerHTML = '<div class="empty-state">Bekleyen sipariş yok</div>';
+            } else if (jacamoStatus.pendingOrdersList.length > 0) {
+                // Show each order from priority queue
+                waitingDiv.innerHTML = jacamoStatus.pendingOrdersList.map((order, index) => {
+                    const menuItem = MENU.find(m => m.id === order.food) || { icon: '🍽️', name: order.food };
+                    const priorityLabel = index === 0 ? '🥇 Öncelik 1' : `#${index + 1}`;
+                    return `
+                        <div class="queue-item" style="border-left: 4px solid ${index === 0 ? '#FFD700' : '#FFC72C'};">
+                            <div class="queue-item-header">
+                                <span class="queue-item-customer">${menuItem.icon} ${menuItem.name}</span>
+                                <span class="queue-item-score" style="background: ${index === 0 ? 'linear-gradient(135deg, #FFD700, #FFA500)' : 'linear-gradient(135deg, #FFC72C, #FFD54F)'};">
+                                    ⭐ ${order.score.toFixed(2)}
+                                </span>
+                            </div>
+                            <div class="queue-item-meta">
+                                <span>👤 ${order.customer}</span>
+                                <span>💰 $${order.price} | ⏱️ ${order.cookTime}s</span>
+                            </div>
+                            <div class="queue-item-meta" style="margin-top: 5px;">
+                                <span style="color: #FF9800; font-weight: 600;">${priorityLabel}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
             } else {
+                // Fallback if pendingOrdersList not available
                 waitingDiv.innerHTML = `
                     <div class="queue-item">
                         <div class="queue-item-header">

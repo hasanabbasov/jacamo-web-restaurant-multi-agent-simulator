@@ -62,7 +62,7 @@ orderCount(0).
     -+orderCount(N+1);
     .print("🧑‍🍳 [SİPARİŞ] Toplam sipariş sayısı: ", N+1);
     
-    // Record order in artifact
+    // Record order in artifact - siparişler kuyrukta birikir
     recordOrder(Customer, Food);
     addToOrder(Customer, Food);
     
@@ -71,9 +71,8 @@ orderCount(0).
         .send(S, tell, orderReceived(Food))
     };
     
-    // Send to kitchen
-    .print("🧑‍🍳 [MUTFAK] Siparişi mutfağa gönderiyorum: ", Food);
-    .send(cook, achieve, prepareFood(Customer, Food)).
+    // NOT sending to cook directly! Cook polls the queue.
+    .print("🧑‍🍳 [KUYRUK] Sipariş kuyruğa eklendi - cook alacak").
 
 // ========== SERVİS ==========
 // Yemek hazır olduğunda (aşçıdan gelen mesaj)
