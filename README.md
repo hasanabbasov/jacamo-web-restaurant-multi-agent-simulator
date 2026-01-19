@@ -1,189 +1,189 @@
 # 🍽️ JaCaMo Restaurant Multi-Agent Simulation
 
-## İlerleme Raporu
+## Progress Report
 
-**Proje:** Otonom Restoran Simülasyonu  
+**Project:** Autonomous Restaurant Simulation  
 **Platform:** JaCaMo (Jason + CArtAgO + Moise)  
 **Containerization:** Docker + Nginx  
-**Durum:** ✅ Aktif Geliştirme
+**Status:** ✅ Active Development
 
 ---
 
-## 📋 1. Proje Özeti
+## 📋 1. Project Summary
 
-Bu proje, yapay zekalı otonom agent'ların birbirleriyle iletişim kurarak bir restoran işletmesini simüle ettiği çok-agent sistemidir.
+This project is a multi-agent system where AI-powered autonomous agents communicate with each other to simulate a restaurant business.
 
-### 🎯 Amaç
-- Multi-Agent Systems (MAS) konseptlerini pratik bir senaryoda göstermek
-- JaCaMo platformunun (Jason, CArtAgO, Moise) entegre kullanımını sergilemek
-- Docker containerization ile kolay deployment sağlamak
-- Web arayüzü ile gerçek zamanlı agent etkileşimi sunmak
+### 🎯 Objective
+- Demonstrate Multi-Agent Systems (MAS) concepts in a practical scenario
+- Showcase the integrated use of JaCaMo platform (Jason, CArtAgO, Moise)
+- Provide easy deployment with Docker containerization
+- Offer real-time agent interaction through web interface
 
-### 🏆 Temel Özellikler
-| Özellik | Açıklama |
-|---------|----------|
-| **Otonom Agent'lar** | Waiter, Cook, Cashier, Customer |
-| **Real-time Web UI** | Sipariş ve kuyruk izleme |
-| **Agent İletişimi** | ACL mesajlaşma protokolü |
-| **Artifact Sistemi** | Paylaşılan ortam nesneleri |
-| **Organizasyon** | Rol ve görev dağılımı |
+### 🏆 Key Features
+| Feature | Description |
+|---------|-------------|
+| **Autonomous Agents** | Waiter, Cook, Cashier, Customer |
+| **Real-time Web UI** | Order and queue monitoring |
+| **Agent Communication** | ACL messaging protocol |
+| **Artifact System** | Shared environment objects |
+| **Organization** | Role and task distribution |
 
 ---
 
-## 🚀 2. Projeyi Başlatma
+## 🚀 2. Getting Started
 
-### Gereksinimler
+### Requirements
 - Docker Desktop
-- Port 8080'in boş olması
+- Port 8080 must be available
 
-### Başlatma Komutu
+### Launch Command
 ```bash
 cd jacamo-web-demo-marketplace-master
 docker-compose up --build
 ```
 
-### Erişim URL'leri
-| URL | Sayfa |
-|-----|-------|
-| http://localhost:8080/simulation.html | Görsel Simülasyon |
-| http://localhost:8080/agents.html | Agent Listesi |
+### Access URLs
+| URL | Page |
+|-----|------|
+| http://localhost:8080/simulation.html | Visual Simulation |
+| http://localhost:8080/agents.html | Agent List |
 | http://localhost:8080/workspaces.html | Environment |
-| http://localhost:8080/oe.html | Organizasyon |
-| http://localhost:8080/agent_new.html | Yeni Agent Oluştur |
+| http://localhost:8080/oe.html | Organization |
+| http://localhost:8080/agent_new.html | Create New Agent |
 
-### Logları İzleme
+### View Logs
 ```bash
 docker logs -f jacamo-web-demo-restaurant-master
 ```
 
-### Durdurma
+### Stop
 ```bash
 docker-compose down
 ```
 
 ---
 
-## 🏗️ 3. Proje Yapısı
+## 🏗️ 3. Project Structure
 
 ```
 jacamo-web-demo-marketplace-master/
 ├── src/
-│   ├── agt/                    # Agent Kodları (.asl)
-│   │   ├── waiter.asl          # Garson agent
-│   │   ├── cook.asl            # Aşçı agent
-│   │   ├── cashier.asl         # Kasiyer agent
-│   │   └── customer.asl        # Müşteri agent
+│   ├── agt/                    # Agent Code (.asl)
+│   │   ├── waiter.asl          # Waiter agent
+│   │   ├── cook.asl            # Cook agent
+│   │   ├── cashier.asl         # Cashier agent
+│   │   └── customer.asl        # Customer agent
 │   │
-│   ├── env/restaurant/         # Artifact'ler (Java)
-│   │   ├── TableManager.java   # Masa yönetimi
-│   │   ├── OrderBoard.java     # Sipariş takibi
-│   │   ├── Kitchen.java        # Mutfak operasyonları
-│   │   └── CashRegister.java   # Kasa ve fiyatlandırma
+│   ├── env/restaurant/         # Artifacts (Java)
+│   │   ├── TableManager.java   # Table management
+│   │   ├── OrderBoard.java     # Order tracking
+│   │   ├── Kitchen.java        # Kitchen operations
+│   │   └── CashRegister.java   # Cash and pricing
 │   │
-│   └── org/                    # Organizasyon
-│       └── restaurant.xml      # Rol ve grup tanımları
+│   └── org/                    # Organization
+│       └── restaurant.xml      # Role and group definitions
 │
-├── restaurant.jcm              # JaCaMo konfigürasyonu
-├── simulation.html             # Web arayüzü
+├── restaurant.jcm              # JaCaMo configuration
+├── simulation.html             # Web interface
 ├── docker-compose.yml          # Container orchestration
-├── Dockerfile                  # JaCaMo image tanımı
+├── Dockerfile                  # JaCaMo image definition
 └── nginx.conf                  # Reverse proxy
 ```
 
 ---
 
-## 🤖 4. Agent Sınıfları (src/agt/)
+## 🤖 4. Agent Classes (src/agt/)
 
 ### 4.1 Waiter Agent (`waiter.asl`)
-**Rol:** Koordinatör - Tüm akışı yönetir
+**Role:** Coordinator - Manages entire flow
 
-| Plan | Tetikleyici | İşlem |
-|------|-------------|-------|
-| `+!takeOrder(C, F)` | Sipariş gelince | OrderBoard'a kaydet, Cook'a gönder |
-| `+foodReady(C, F)` | Yemek hazır | Müşteriye servis et |
-| `+!getBill(C)` | Hesap istenir | CashRegister'dan hesapla |
+| Plan | Trigger | Action |
+|------|---------|--------|
+| `+!takeOrder(C, F)` | When order arrives | Record to OrderBoard, send to Cook |
+| `+foodReady(C, F)` | When food is ready | Serve to customer |
+| `+!getBill(C)` | When bill is requested | Calculate from CashRegister |
 
-**Kullandığı Artifact'ler:** `TableManager`, `OrderBoard`, `CashRegister`
+**Artifacts Used:** `TableManager`, `OrderBoard`, `CashRegister`
 
 ### 4.2 Cook Agent (`cook.asl`)
-**Rol:** Üretici - Yemek hazırlar
+**Role:** Producer - Prepares food
 
-| Plan | Tetikleyici | İşlem |
-|------|-------------|-------|
-| `+!prepareFood(C, F)` | Waiter'dan sipariş | Pişirme süresi bekle, hazır olunca bildir |
+| Plan | Trigger | Action |
+|------|---------|--------|
+| `+!prepareFood(C, F)` | Order from Waiter | Wait cooking time, notify when ready |
 
-**Pişirme Süreleri:**
-- 🍕 Pizza: 15 saniye
-- 🍔 Burger: 13 saniye
-- 🥗 Salad: 12 saniye
-- 🍝 Pasta: 14 saniye
-- 🥩 Steak: 17 saniye
+**Cooking Times:**
+- 🍕 Pizza: 15 seconds
+- 🍔 Burger: 13 seconds
+- 🥗 Salad: 12 seconds
+- 🍝 Pasta: 14 seconds
+- 🥩 Steak: 17 seconds
 
 ### 4.3 Cashier Agent (`cashier.asl`)
-**Rol:** Finans - Ödemeleri işler
+**Role:** Finance - Processes payments
 
-| Plan | İşlem |
-|------|-------|
-| `+!processPayment(C, A)` | Ödemeyi kabul et, kasa güncelle |
+| Plan | Action |
+|------|--------|
+| `+!processPayment(C, A)` | Accept payment, update cash register |
 
 ### 4.4 Customer Agent (`customer.asl`)
-**Rol:** Simülatör - Sipariş verir, yer, öder
+**Role:** Simulator - Orders, eats, pays
 
-| Plan | İşlem |
-|------|-------|
-| `+!init` | Workspace'e katıl, artifact'lere odaklan |
-| `+orderReceived` | Sipariş onayını al |
-| `+foodServed` | Yemeği al, ye, hesap iste |
+| Plan | Action |
+|------|--------|
+| `+!init` | Join workspace, focus on artifacts |
+| `+orderReceived` | Receive order confirmation |
+| `+foodServed` | Receive food, eat, request bill |
 
 ---
 
-## 🛠️ 5. Artifact Sınıfları (src/env/restaurant/)
+## 🛠️ 5. Artifact Classes (src/env/restaurant/)
 
 ### 5.1 TableManager.java
-**Amaç:** Masa rezervasyonu ve durumu
+**Purpose:** Table reservation and status
 
-| Operation | Parametre | Sonuç |
-|-----------|-----------|-------|
-| `assignTable(customer)` | Müşteri adı | Masa atar, `tableAssigned` sinyali |
-| `freeTable(customer)` | Müşteri adı | Masayı boşaltır |
+| Operation | Parameter | Result |
+|-----------|-----------|--------|
+| `assignTable(customer)` | Customer name | Assigns table, `tableAssigned` signal |
+| `freeTable(customer)` | Customer name | Frees the table |
 
 **Observable Properties:**
-- `tableStatus(id, status)` - Her masanın durumu
+- `tableStatus(id, status)` - Status of each table
 
 ### 5.2 OrderBoard.java
-**Amaç:** Sipariş takip tahtası (Frontend'e veri sağlar)
+**Purpose:** Order tracking board (Provides data to Frontend)
 
-| Operation | İşlem |
-|-----------|-------|
-| `recordOrder(c, f)` | Yeni sipariş kaydet |
-| `startCooking(f)` | Pişirme başladı |
-| `finishCooking(f)` | Pişirme bitti |
-| `deliverFood(c, f)` | Servis yapıldı |
+| Operation | Action |
+|-----------|--------|
+| `recordOrder(c, f)` | Record new order |
+| `startCooking(f)` | Cooking started |
+| `finishCooking(f)` | Cooking finished |
+| `deliverFood(c, f)` | Service completed |
 
 **Observable Properties:**
-- `pendingOrders` - Bekleyen sipariş sayısı
-- `cookingOrders` - Pişen sipariş sayısı
-- `completedOrders` - Tamamlanan sayısı
-- `currentStatus` - Son durum mesajı
+- `pendingOrders` - Number of pending orders
+- `cookingOrders` - Number of cooking orders
+- `completedOrders` - Number of completed orders
+- `currentStatus` - Last status message
 
 ### 5.3 Kitchen.java
-**Amaç:** Mutfak kapasitesi ve ocak yönetimi
+**Purpose:** Kitchen capacity and stove management
 
-| Operation | İşlem |
-|-----------|-------|
-| `useOven()` | Ocağı meşgul et |
-| `releaseOven()` | Ocağı serbest bırak |
+| Operation | Action |
+|-----------|--------|
+| `useOven()` | Occupy the stove |
+| `releaseOven()` | Release the stove |
 
 ### 5.4 CashRegister.java
-**Amaç:** Fiyatlandırma ve ödeme
+**Purpose:** Pricing and payment
 
-| Operation | İşlem |
-|-----------|-------|
-| `addToOrder(c, f)` | Müşteri hesabına yemek ekle |
-| `calculateBill(c)` | Toplam hesabı hesapla |
-| `processPayment(c, a)` | Ödemeyi işle |
+| Operation | Action |
+|-----------|--------|
+| `addToOrder(c, f)` | Add food to customer's bill |
+| `calculateBill(c)` | Calculate total bill |
+| `processPayment(c, a)` | Process payment |
 
-**Fiyat Listesi:**
+**Price List:**
 - Pizza: $25
 - Burger: $18
 - Salad: $12
@@ -194,59 +194,59 @@ jacamo-web-demo-marketplace-master/
 
 ## 🏛️ 6. Organization (src/org/restaurant.xml)
 
-Moise organizasyon yapısı, agent'ların sosyal ilişkilerini, rollerini ve görevlerini tanımlar. Bu XML dosyası üç ana bölümden oluşur.
+Moise organization structure defines the social relationships, roles, and tasks of agents. This XML file consists of three main sections.
 
-### 6.1 Structural Specification (Yapısal Tanım)
+### 6.1 Structural Specification
 
-Agent'ların rollerini ve gruplarını belirler.
+Defines agents' roles and groups.
 
-**Roller:**
-| Rol ID | Açıklama | Min-Max |
-|--------|----------|---------|
-| `rcustomer` | Müşteri rolü | 1-10 |
-| `rwaiter` | Garson rolü | 1-3 |
-| `rcook` | Aşçı rolü | 1-2 |
-| `rcashier` | Kasiyer rolü | 1-1 |
+**Roles:**
+| Role ID | Description | Min-Max |
+|---------|-------------|---------|
+| `rcustomer` | Customer role | 1-10 |
+| `rwaiter` | Waiter role | 1-3 |
+| `rcook` | Cook role | 1-2 |
+| `rcashier` | Cashier role | 1-1 |
 
-**İletişim Bağlantıları:**
+**Communication Links:**
 ```
-rcustomer ↔ rwaiter   (sipariş, servis)
-rwaiter   ↔ rcook     (mutfak koordinasyonu)
-rwaiter   ↔ rcashier  (hesap)
-rcustomer ↔ rcashier  (ödeme)
+rcustomer ↔ rwaiter   (order, service)
+rwaiter   ↔ rcook     (kitchen coordination)
+rwaiter   ↔ rcashier  (bill)
+rcustomer ↔ rcashier  (payment)
 ```
 
-### 6.2 Functional Specification (İşlevsel Tanım)
+### 6.2 Functional Specification
 
-Hizmet akışını (scheme) ve görevleri (mission) tanımlar.
+Defines service flow (scheme) and missions.
 
-**Service Flow (Sıralı Akış):**
+**Service Flow (Sequential):**
 ```
 seatCustomer → takeOrder → cookFood → serveFood → takePayment
 ```
 
-**Görevler (Missions):**
-| Mission | Rol | Hedefler |
-|---------|-----|----------|
+**Missions:**
+| Mission | Role | Goals |
+|---------|------|-------|
 | `mCustomer` | rcustomer | seatCustomer, takePayment |
 | `mWaiter` | rwaiter | takeOrder, serveFood |
 | `mCook` | rcook | cookFood |
 | `mCashier` | rcashier | takePayment |
 
-### 6.3 Normative Specification (Normatif Tanım)
+### 6.3 Normative Specification
 
-Rollerin zorunlu görevlerini (obligation) belirler.
+Defines mandatory obligations for roles.
 
-| Norm | Rol | Zorunluluk |
-|------|-----|------------|
-| `normWaiterOrder` | rwaiter | Sipariş almalı |
-| `normCookFood` | rcook | Yemek hazırlamalı |
-| `normCashierPayment` | rcashier | Ödeme almalı |
-| `normCustomerPay` | rcustomer | Ödeme yapmalı |
+| Norm | Role | Obligation |
+|------|------|------------|
+| `normWaiterOrder` | rwaiter | Must take orders |
+| `normCookFood` | rcook | Must prepare food |
+| `normCashierPayment` | rcashier | Must accept payment |
+| `normCustomerPay` | rcustomer | Must make payment |
 
 ---
 
-## 🔄 7. İletişim Akışı
+## 🔄 7. Communication Flow
 
 ```
 ┌─────────────┐     (1) takeOrder      ┌─────────────┐
@@ -282,24 +282,24 @@ Rollerin zorunlu görevlerini (obligation) belirler.
 
 ---
 
-## 🧪 7. Customer4 Örneği (Runtime Agent Oluşturma)
+## 🧪 7. Customer4 Example (Runtime Agent Creation)
 
-Bu bölümde, çalışma zamanında yeni bir müşteri agent'ı oluşturup yapılandırmayı gösteriyoruz.
+This section demonstrates creating and configuring a new customer agent at runtime.
 
-### Adım 1: Agent Oluştur
+### Step 1: Create Agent
 ```
 http://localhost:8080/agent_new.html
-→ "customer4" yaz, Enter'a bas
+→ Type "customer4", press Enter
 ```
 
-### Adım 2: Agent Sayfasına Git
+### Step 2: Go to Agent Page
 ```
 http://localhost:8080/agent.html?agent=customer4
 ```
 
-### Adım 3: ASL Kodu Yükle
+### Step 3: Load ASL Code
 
-Sayfanın altındaki `customer4.asl` linkine tıklayın ve editöre şu kodu yapıştırın:
+Click the `customer4.asl` link at the bottom of the page and paste the following code in the editor:
 
 ```prolog
 // ═══════════════════════════════════════════════════════
@@ -314,55 +314,55 @@ myBudget(100).
 !init.
 
 // ═══════════════════════════════════════════════════════
-// INIT - Agent başlatma
+// INIT - Agent initialization
 // ═══════════════════════════════════════════════════════
 +!init <-
     .print("═══════════════════════════════════════════════════════");
-    .print("🧑 [CUSTOMER4] Merhaba! Ben yeni bir müşteriyim.");
-    .print("🧑 [CUSTOMER4] Tercihim: pasta, Bütçem: $100");
+    .print("🧑 [CUSTOMER4] Hello! I am a new customer.");
+    .print("🧑 [CUSTOMER4] Preference: pasta, Budget: $100");
     .print("═══════════════════════════════════════════════════════");
     
-    // Workspace'e katıl
+    // Join workspace
     joinWorkspace("diningRoom", WspId);
-    .print("🧑 [CUSTOMER4] diningRoom workspace'ine katıldım.");
+    .print("🧑 [CUSTOMER4] Joined diningRoom workspace.");
     
-    // Artifact'lere odaklan
+    // Focus on artifacts
     lookupArtifact("orderBoard", OrderId);
     focus(OrderId);
     lookupArtifact("tables", TablesId);
     focus(TablesId);
-    .print("🧑 [CUSTOMER4] Artifact'lere odaklandım.");
+    .print("🧑 [CUSTOMER4] Focused on artifacts.");
     
-    .print("🧑 [CUSTOMER4] ✅ Hazırım! simulation.html'den sipariş verebilirsiniz.").
+    .print("🧑 [CUSTOMER4] ✅ Ready! You can order from simulation.html.").
 
 // ═══════════════════════════════════════════════════════
-// Sipariş ve Servis Planları
+// Order and Service Plans
 // ═══════════════════════════════════════════════════════
 +orderReceived(Food)[source(S)] <-
-    .print("🧑 [CUSTOMER4] ✓ Siparişim onaylandı: ", Food);
-    .print("🧑 [CUSTOMER4] Yemeğimi bekliyorum...").
+    .print("🧑 [CUSTOMER4] ✓ My order confirmed: ", Food);
+    .print("🧑 [CUSTOMER4] Waiting for my food...").
 
 +foodServed(Food)[source(S)] <-
     .print("═══════════════════════════════════════════════════════");
-    .print("🧑 [CUSTOMER4] 🍽️ Yemeğim geldi: ", Food);
-    .print("🧑 [CUSTOMER4] Yiyorum...");
+    .print("🧑 [CUSTOMER4] 🍽️ My food arrived: ", Food);
+    .print("🧑 [CUSTOMER4] Eating...");
     .print("═══════════════════════════════════════════════════════");
     .wait(3000);
-    .print("🧑 [CUSTOMER4] Yemeğimi bitirdim! 😋");
+    .print("🧑 [CUSTOMER4] Finished my meal! 😋");
     !askForBill.
 
 +!askForBill <-
-    .print("🧑 [CUSTOMER4] 💰 Hesap istiyorum...");
+    .print("🧑 [CUSTOMER4] 💰 Requesting bill...");
     .send(waiter, achieve, getBill(customer4)).
 
 +billReady(Amount)[source(S)] <-
-    .print("🧑 [CUSTOMER4] Hesap: $", Amount);
-    .print("🧑 [CUSTOMER4] Ödeme yapıyorum...");
+    .print("🧑 [CUSTOMER4] Bill: $", Amount);
+    .print("🧑 [CUSTOMER4] Making payment...");
     .send(cashier, achieve, processPayment(customer4, Amount)).
 
 +paymentComplete[source(S)] <-
     .print("═══════════════════════════════════════════════════════");
-    .print("🧑 [CUSTOMER4] ✅ Ödeme tamamlandı! Teşekkürler!");
+    .print("🧑 [CUSTOMER4] ✅ Payment complete! Thank you!");
     .print("═══════════════════════════════════════════════════════").
 
 // Templates
@@ -370,20 +370,20 @@ myBudget(100).
 { include("$jacamoJar/templates/common-moise.asl") }
 ```
 
-### Adım 4: Kaydet ve Başlat
-1. **Save** butonuna tıkla
-2. Üstteki Command kutusuna `!init` yaz ve Enter
+### Step 4: Save and Start
+1. Click **Save** button
+2. Type `!init` in the Command box at top and press Enter
 
-### Adım 5: Test Et
-1. http://localhost:8080/simulation.html adresine git
-2. "Müşteri Seç" dropdown'unda `customer4` görünecek
-3. Sipariş ver ve terminal'de akışı izle:
+### Step 5: Test
+1. Go to http://localhost:8080/simulation.html
+2. `customer4` will appear in "Select Customer" dropdown
+3. Place an order and watch the flow in terminal:
    ```bash
    docker logs -f jacamo-web-demo-restaurant-master
    ```
 
-### Kalıcı Ekleme (Opsiyonel)
-`restaurant.jcm` dosyasına ekleyerek sistem yeniden başladığında otomatik oluşmasını sağlayabilirsiniz:
+### Permanent Addition (Optional)
+You can add to `restaurant.jcm` file to have it automatically created when system restarts:
 
 ```
 agent customer4 : customer.asl {
@@ -395,29 +395,29 @@ agent customer4 : customer.asl {
 
 ---
 
-## 📊 8. Mevcut Durum ve Sonraki Adımlar
+## 📊 8. Current Status and Next Steps
 
-### ✅ Tamamlanan
+### ✅ Completed
 - [x] Docker containerization
 - [x] Nginx reverse proxy
-- [x] Web simülasyon arayüzü
-- [x] Agent iletişim akışı
-- [x] Gerçek zamanlı artifact polling
-- [x] Dinamik müşteri dropdown
-- [x] Pişirme süreleri (+10 saniye)
+- [x] Web simulation interface
+- [x] Agent communication flow
+- [x] Real-time artifact polling
+- [x] Dynamic customer dropdown
+- [x] Cooking times (+10 seconds)
 - [x] Light theme UI redesign
 
-### 🔄 Devam Eden
-- [ ] Priority queue algoritması (değer/süre sıralaması)
-- [ ] Daha detaylı kuyruk görselleştirmesi
-- [ ] Blackboard Pattern Dene!
+### 🔄 In Progress
+- [ ] Priority queue algorithm (value/time sorting)
+- [ ] More detailed queue visualization
+- [ ] Try Blackboard Pattern!
 
-### 📝 Notlar
-- JaCaMo agent'ları terminalde detaylı log basar
-- Frontend her 2 saniyede OrderBoard'u poll eder
-- Yeni agent'lar dropdown'a otomatik eklenir
+### 📝 Notes
+- JaCaMo agents print detailed logs in terminal
+- Frontend polls OrderBoard every 2 seconds
+- New agents are automatically added to dropdown
 
 ---
 
-**Rapor Tarihi:** 2026-01-10  
-**Proje Repository:** https://github.com/hasanabbasov/jacamo-web-restaurant-multi-agent-simulator
+**Report Date:** 2026-01-10  
+**Project Repository:** https://github.com/hasanabbasov/jacamo-web-restaurant-multi-agent-simulator

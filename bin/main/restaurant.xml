@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet href="http://moise.sourceforge.net/xml/os.xsl" type="text/xsl" ?>
+
+<!--
+    Restaurant Organization Schema
+    
+    🏛️ Moise Organization for Restaurant Multi-Agent System
+    
+    Roller:
+    - rcustomer: Müşteri rolü (sipariş verir, ödeme yapar)
+    - rwaiter: Garson rolü (koordinatör)
+    - rcook: Aşçı rolü (yemek hazırlar)
+    - rcashier: Kasiyer rolü (ödeme alır)
+    
+    Akış: seatCustomer → takeOrder → cookFood → serveFood → takePayment
+-->
+
+<organisational-specification id="restaurant"
+    os-version="0.8" xmlns='http://moise.sourceforge.net/os'
+    xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+    xsi:schemaLocation='http://moise.sourceforge.net/os
+                        http://moise.sourceforge.net/xml/os.xsd'>
+
+    <!-- ========== STRUCTURAL SPECIFICATION ========== -->
+    <structural-specification>
+
+        <role-definitions>
+            <role id="rcustomer" />
+            <role id="rwaiter" />
+            <role id="rcook" />
+            <role id="rcashier" />
+        </role-definitions>
+
+        <!-- Restaurant Group - tüm personel ve müşteriler -->
+        <group-specification id="restaurantTeam">
+            <roles>
+                <role id="rcustomer" min="1" max="10"/>
+                <role id="rwaiter" min="1" max="3"/>
+                <role id="rcook" min="1" max="2"/>
+                <role id="rcashier" min="1" max="1"/>
+            </roles>
+            
+            <links>
+                <!-- Müşteri ↔ Garson iletişimi -->
+                <link from="rcustomer" to="rwaiter" type="communication" 
+                      scope="intra-group" bi-dir="true"/>
+                <!-- Garson ↔ Aşçı iletişimi -->
+                <link from="rwaiter" to="rcook" type="communication" 
+                      scope="intra-group" bi-dir="true"/>
+                <!-- Müşteri ↔ Kasiyer iletişimi -->
+                <link from="rcustomer" to="rcashier" type="communication" 
+                      scope="intra-group" bi-dir="true"/>
+                <!-- Garson ↔ Kasiyer iletişimi -->
+                <link from="rwaiter" to="rcashier" type="communication" 
+                      scope="intra-group" bi-dir="true"/>
+            </links>
+        </group-specification>
+
+    </structural-specification>
+
+    <!-- ========== FUNCTIONAL SPECIFICATION ========== -->
+    <functional-specification>
+    
+        <scheme id="serviceFlow">
+            <goal id="completeService">
+                <plan operator="sequence">
+                    <goal id="seatCustomer" 
+                          ds="Müşteri masaya oturur"/>
+                    <goal id="takeOrder" 
+                          ds="Garson siparişi alır"/>
+                    <goal id="cookFood" 
+                          ds="Aşçı yemeği hazırlar"/>
+                    <goal id="serveFood" 
+                          ds="Garson yemeği servis eder"/>
+                    <goal id="takePayment" 
+                          ds="Kasiyer ödemeyi alır"/>
+                </plan>
+            </goal>
+
+            <!-- MISSIONS -->
+            
+            <!-- Müşteri görevi: oturmak ve ödemek -->
+            <mission id="mCustomer" min="1" max="10">
+                <goal id="seatCustomer"/>
+                <goal id="takePayment"/>
+            </mission>
+
+            <!-- Garson görevi: sipariş almak ve servis etmek -->
+            <mission id="mWaiter" min="1" max="3">
+                <goal id="takeOrder"/>
+                <goal id="serveFood"/>
+            </mission>
+
+            <!-- Aşçı görevi: yemek pişirmek -->
+            <mission id="mCook" min="1" max="2">
+                <goal id="cookFood"/>
+            </mission>
+
+            <!-- Kasiyer görevi: ödeme almak -->
+            <mission id="mCashier" min="1" max="1">
+                <goal id="takePayment"/>
+            </mission>
+
+        </scheme>
+
+    </functional-specification>
+
+    <!-- ========== NORMATIVE SPECIFICATION ========== -->
+    <normative-specification>
+        <properties>
+            <!-- fail: norm ihlali hata verir, ignore: sessizce devam eder -->
+            <property id="default_management" value="ignore" />
+        </properties>
+
+        <!-- OBLIGATIONS: Roller ne yapmalı -->
+        
+        <!-- Garson siparişi ALMALI -->
+        <norm id="normWaiterOrder" type="obligation" 
+              role="rwaiter" mission="mWaiter" />
+        
+        <!-- Aşçı yemeği HAZIRLAMALI -->
+        <norm id="normCookFood" type="obligation" 
+              role="rcook" mission="mCook" />
+        
+        <!-- Kasiyer ödemeyi ALMALI -->
+        <norm id="normCashierPayment" type="obligation" 
+              role="rcashier" mission="mCashier" />
+        
+        <!-- Müşteri ÖDEMELI -->
+        <norm id="normCustomerPay" type="obligation" 
+              role="rcustomer" mission="mCustomer" />
+
+    </normative-specification>
+
+</organisational-specification>
